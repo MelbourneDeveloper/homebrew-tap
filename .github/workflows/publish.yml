@@ -1,0 +1,73 @@
+name: Publish Formula
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g., 0.1.0)'
+        required: true
+        type: string
+
+jobs:
+  update-formula:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout tap repository
+        uses: actions/checkout@v4
+
+      - name: Download release artifacts and compute SHA256
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          # Base URL for releases
+          BASE_URL="https://github.com/MelbourneDeveloper/dart_mutant/releases/download/v${VERSION}"
+
+          # Download and compute SHA256 for each platform
+          declare -A PLATFORMS=(
+            ["aarch64-apple-darwin"]="ARM64_MACOS"
+            ["x86_64-apple-darwin"]="X64_MACOS"
+            ["aarch64-unknown-linux-gnu"]="ARM64_LINUX"
+            ["x86_64-unknown-linux-gnu"]="X64_LINUX"
+          )
+
+          for platform in "${!PLATFORMS[@]}"; do
+            filename="dart_mutant-${VERSION}-${platform}.tar.gz"
+            url="${BASE_URL}/${filename}"
+            echo "Downloading ${url}..."
+
+            if curl -fsSL -o "${filename}" "${url}"; then
+              sha=$(sha256sum "${filename}" | cut -d' ' -f1)
+              varname="${PLATFORMS[$platform]}"
+              echo "${varname}_SHA256=${sha}" >> $GITHUB_ENV
+              echo "SHA256 for ${platform}: ${sha}"
+            else
+              echo "Warning: Could not download ${filename}"
+              varname="${PLATFORMS[$platform]}"
+              echo "${varname}_SHA256=RELEASE_NOT_FOUND" >> $GITHUB_ENV
+            fi
+          done
+
+      - name: Update formula
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          # Update version
+          sed -i "s/version \".*\"/version \"${VERSION}\"/" Formula/dart_mutant.rb
+
+          # Update SHA256 hashes
+          sed -i "s/PLACEHOLDER_SHA256_ARM64_MACOS/${ARM64_MACOS_SHA256}/" Formula/dart_mutant.rb
+          sed -i "s/PLACEHOLDER_SHA256_X64_MACOS/${X64_MACOS_SHA256}/" Formula/dart_mutant.rb
+          sed -i "s/PLACEHOLDER_SHA256_ARM64_LINUX/${ARM64_LINUX_SHA256}/" Formula/dart_mutant.rb
+          sed -i "s/PLACEHOLDER_SHA256_X64_LINUX/${X64_LINUX_SHA256}/" Formula/dart_mutant.rb
+
+          # Also update any previously set hashes (for re-runs)
+          sed -i "s/sha256 \"[a-f0-9]\{64\}\"/sha256 \"${ARM64_MACOS_SHA256}\"/" Formula/dart_mutant.rb || true
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/dart_mutant.rb
+          git commit -m "Update dart_mutant to v${{ inputs.version }}"
+          git push
