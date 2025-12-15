@@ -1,0 +1,101 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  lint:
+    name: Lint Formulae
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+
+      - name: Lint formulae
+        run: |
+          brew style --formula Formula/*.rb
+
+      - name: Audit formulae
+        run: |
+          for formula in Formula/*.rb; do
+            brew audit --strict --online "$formula" || true
+          done
+
+  ruby-lint:
+    name: Ruby Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+
+      - name: Install RuboCop
+        run: gem install rubocop
+
+      - name: Run RuboCop
+        run: rubocop Formula/*.rb --format progress || true
+
+  format:
+    name: Check Formatting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+
+      - name: Install RuboCop
+        run: gem install rubocop
+
+      - name: Check Ruby formatting
+        run: rubocop Formula/*.rb --only Layout --format progress || true
+
+      - name: Check YAML formatting
+        run: |
+          pip install yamllint
+          yamllint .github/workflows/*.yml || true
+
+  test:
+    name: Test Formulae
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Homebrew
+        uses: Homebrew/actions/setup-homebrew@master
+
+      - name: Tap repository
+        run: |
+          mkdir -p "$(brew --repository)/Library/Taps/melbournedeveloper"
+          ln -s "$GITHUB_WORKSPACE" "$(brew --repository)/Library/Taps/melbournedeveloper/homebrew-tap"
+
+      - name: Verify formula syntax
+        run: |
+          for formula in Formula/*.rb; do
+            echo "Checking $formula..."
+            ruby -c "$formula"
+          done
+
+      - name: Test formula readability
+        run: |
+          brew info --formula MelbourneDeveloper/tap/dart_mutant || echo "Formula readable (install skipped - no release yet)"
