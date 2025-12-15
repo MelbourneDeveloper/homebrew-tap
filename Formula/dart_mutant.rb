@@ -9,8 +9,8 @@ class DartMutant < Formula
 
   on_macos do
     on_arm do
-      url "https://github.com/MelbourneDeveloper/dart_mutant/releases/download/v0.1.0/dart_mutant-v0.1.0-aarch64-apple-darwin.tar.gz"
-      sha256 "1c9e99909d2cd1532f492cb53b7c9a5a09f5189309b06806ac3112f24a0c04f1"
+      url "https://github.com/MelbourneDeveloper/dart_mutant/releases/download/v#{version}/dart_mutant-v#{version}-aarch64-apple-darwin.tar.gz"
+      sha256 "63324a50f5960f7cc23417cfdd16d289f55ce47445ac4789add7a964d92be69a"
     end
   end
 
@@ -19,6 +19,6 @@ class DartMutant < Formula
   end
 
   test do
-    assert_match "dart_mutant", shell_output("\#{bin}/dart_mutant --version")
+    assert_match "dart_mutant", shell_output("#{bin}/dart_mutant --version")
   end
 end
