@@ -1,0 +1,224 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Create site content
+        run: |
+          mkdir -p _site
+
+          cat > _site/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>MelbourneDeveloper Homebrew Tap</title>
+            <style>
+              :root {
+                --bg: #0d1117;
+                --surface: #161b22;
+                --border: #30363d;
+                --text: #c9d1d9;
+                --text-muted: #8b949e;
+                --accent: #58a6ff;
+                --green: #3fb950;
+                --purple: #a371f7;
+              }
+              * { box-sizing: border-box; margin: 0; padding: 0; }
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+                background: var(--bg);
+                color: var(--text);
+                line-height: 1.6;
+                min-height: 100vh;
+              }
+              .container {
+                max-width: 900px;
+                margin: 0 auto;
+                padding: 2rem;
+              }
+              header {
+                text-align: center;
+                padding: 3rem 0;
+                border-bottom: 1px solid var(--border);
+                margin-bottom: 3rem;
+              }
+              h1 {
+                font-size: 2.5rem;
+                margin-bottom: 0.5rem;
+                background: linear-gradient(135deg, var(--accent), var(--purple));
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+              }
+              .subtitle {
+                color: var(--text-muted);
+                font-size: 1.1rem;
+              }
+              .install-box {
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                padding: 1.5rem;
+                margin: 2rem 0;
+              }
+              .install-box h2 {
+                font-size: 1rem;
+                color: var(--text-muted);
+                margin-bottom: 1rem;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+              }
+              code {
+                font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+                background: var(--bg);
+                padding: 0.75rem 1rem;
+                border-radius: 6px;
+                display: block;
+                color: var(--green);
+                font-size: 0.95rem;
+                overflow-x: auto;
+              }
+              .formula {
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                padding: 1.5rem;
+                margin: 2rem 0;
+              }
+              .formula-header {
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+                margin-bottom: 1rem;
+              }
+              .formula-icon {
+                width: 48px;
+                height: 48px;
+                background: linear-gradient(135deg, #00d2b8, #00a98f);
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.5rem;
+              }
+              .formula-name {
+                font-size: 1.5rem;
+                color: var(--text);
+              }
+              .formula-desc {
+                color: var(--text-muted);
+                margin-bottom: 1rem;
+              }
+              .badge {
+                display: inline-block;
+                padding: 0.25rem 0.75rem;
+                background: var(--bg);
+                border-radius: 20px;
+                font-size: 0.8rem;
+                color: var(--accent);
+                margin-right: 0.5rem;
+              }
+              a {
+                color: var(--accent);
+                text-decoration: none;
+              }
+              a:hover {
+                text-decoration: underline;
+              }
+              .links {
+                margin-top: 1.5rem;
+                padding-top: 1rem;
+                border-top: 1px solid var(--border);
+              }
+              footer {
+                text-align: center;
+                padding: 2rem 0;
+                color: var(--text-muted);
+                font-size: 0.9rem;
+                border-top: 1px solid var(--border);
+                margin-top: 3rem;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <header>
+                <h1>MelbourneDeveloper Tap</h1>
+                <p class="subtitle">Homebrew formulae for developer tools</p>
+              </header>
+
+              <div class="install-box">
+                <h2>Add this tap</h2>
+                <code>brew tap MelbourneDeveloper/tap</code>
+              </div>
+
+              <h2 style="margin-bottom: 1rem; color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em;">Available Formulae</h2>
+
+              <div class="formula">
+                <div class="formula-header">
+                  <div class="formula-icon">🧬</div>
+                  <div class="formula-name">dart_mutant</div>
+                </div>
+                <p class="formula-desc">
+                  A blazingly fast mutation testing tool for Dart using tree-sitter AST parsing.
+                  Unlike text-based mutation tools, dart_mutant understands your code structure
+                  and only creates valid, meaningful mutations.
+                </p>
+                <div>
+                  <span class="badge">Rust</span>
+                  <span class="badge">Dart</span>
+                  <span class="badge">Testing</span>
+                </div>
+                <code style="margin-top: 1rem;">brew install MelbourneDeveloper/tap/dart_mutant</code>
+                <div class="links">
+                  <a href="https://github.com/MelbourneDeveloper/dart_mutant">GitHub Repository</a>
+                </div>
+              </div>
+
+              <footer>
+                <p>
+                  <a href="https://github.com/MelbourneDeveloper/homebrew-tap">View on GitHub</a>
+                </p>
+              </footer>
+            </div>
+          </body>
+          </html>
+          EOF
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
